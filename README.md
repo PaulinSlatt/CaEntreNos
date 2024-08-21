@@ -12,6 +12,8 @@ O **CaEntreNos** é uma API desenvolvida para gerenciar as operações de uma cl
 - Cadastro, resposta, listagem e exclusão de relatos.
 - Autenticação via JWT para admins e alunos.
 - Documentação completa da API utilizando Swagger.
+- Swagger UI: http://localhost:8080/swagger-ui/index.html
+- Documentação JSON (OpenAPI): http://localhost:8080/v3/api-docs
 
 ## Tecnologias Utilizadas
 
