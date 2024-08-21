@@ -1,0 +1,1 @@
+alter table alunos add ano varchar(5) not null;
