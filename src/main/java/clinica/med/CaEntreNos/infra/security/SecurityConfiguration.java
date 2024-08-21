@@ -56,6 +56,10 @@ public class SecurityConfiguration {
                     // Permite acesso apenas para admins nas rotas de admin
                     req.requestMatchers("/admin/**").hasAuthority("ADMIN");
 
+                    // Permite acesso público às rotas do Swagger
+                    req.requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll();
+
+
                     // Exige autenticação para todas as outras requisições
                     req.anyRequest().authenticated();
                 })

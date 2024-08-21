@@ -15,6 +15,7 @@
 	<description>Demo project for Spring Boot</description>
 	<properties>
 		<java.version>17</java.version>
+		<SWAGGER.VERSION>2.6.0</SWAGGER.VERSION>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -70,6 +71,12 @@
 			<groupId>org.springframework.security</groupId>
 			<artifactId>spring-security-test</artifactId>
 			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>${SWAGGER.VERSION}</version>
 		</dependency>
 
 		<dependency>
