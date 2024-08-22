@@ -2,7 +2,7 @@
 
 ## Descrição
 
-O **CaEntreNos** é uma API desenvolvida para gerenciar as operações de uma clínica, incluindo cadastro e gerenciamento de responsáveis, alunos, admins e relatos. Esta API foi construída utilizando **Spring Boot** e segue as melhores práticas de desenvolvimento.
+O **CaEntreNos** é uma API desenvolvida para gerenciar as operações de uma escola, incluindo cadastro e gerenciamento de responsáveis, alunos, admins e relatos. Esta API foi construída utilizando **Spring Boot** e segue as melhores práticas de desenvolvimento.
 
 ## Funcionalidades
 
