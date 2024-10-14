@@ -9,6 +9,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -23,6 +24,13 @@ public class AdminController {
     @Autowired
     private TokenService tokenService;
 
+    @Autowired
+    private AdminRepository adminRepository;
+
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     @PostMapping
     @Transactional
     public ResponseEntity<DTOListaAdmin> cadastrarAdmin(@RequestBody @Valid DTOCadastroAdmin dados, UriComponentsBuilder uriComponentsBuilder) {
@@ -36,6 +44,31 @@ public class AdminController {
         var admin = adminService.autenticarAdmin(dados);
         var tokenJWT = tokenService.GerarTokenAdmin(admin);
         return ResponseEntity.ok(new DTOTokenJWT(tokenJWT));
+    }
+
+    // Solicitação de recuperação de senha para Admin
+    @PostMapping("/recuperar-senha")
+    public ResponseEntity<String> solicitarRecuperacaoSenha(@RequestParam String login) {
+        var admin = adminRepository.findByLogin(login)
+                .orElseThrow(() -> new IllegalArgumentException("Admin não encontrado"));
+
+        String token = tokenService.GerarTokenAdmin(admin);
+        return ResponseEntity.ok("Token de recuperação: " + token);
+    }
+
+    // Redefinição de senha para Admin
+    @PostMapping("/redefinir-senha")
+    public ResponseEntity<String> redefinirSenha(
+            @RequestParam String token,
+            @RequestParam String novaSenha) {
+        String login = tokenService.decodeToken(token).getSubject();
+        var admin = adminRepository.findByLogin(login)
+                .orElseThrow(() -> new IllegalArgumentException("Admin não encontrado"));
+
+        admin.setSenha(passwordEncoder.encode(novaSenha));
+        adminRepository.save(admin);
+
+        return ResponseEntity.ok("Senha redefinida com sucesso.");
     }
 
     @GetMapping

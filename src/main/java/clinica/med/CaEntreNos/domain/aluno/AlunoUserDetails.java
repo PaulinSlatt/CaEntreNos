@@ -20,12 +20,12 @@ public class AlunoUserDetails implements UserDetails {
 
     @Override
     public String getPassword() {
-        return aluno.getSenha(); // Assumindo que você tem um campo senha
+        return aluno.getSenha();
     }
 
     @Override
     public String getUsername() {
-        return aluno.getLogin(); // Ou outro campo único, como login
+        return aluno.getLogin();
     }
 
     @Override

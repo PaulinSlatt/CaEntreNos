@@ -9,6 +9,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -20,11 +21,17 @@ public class AlunoController {
     @Autowired
     private AlunoService alunoService;
 
-
+    @Autowired
+    private AlunoRepository alunoRepository;
 
     @Autowired
     private TokenService tokenService;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+
+    @CrossOrigin(origins = "http://192.168.0.16:8081")
     @PostMapping
     @Transactional
     public ResponseEntity<DTOListaAluno> Cadastrar(@RequestBody @Valid DTOCadastroAluno dados, UriComponentsBuilder uriComponentsBuilder) {
@@ -33,6 +40,8 @@ public class AlunoController {
         return ResponseEntity.created(uri).body(new DTOListaAluno(aluno));
     }
 
+
+    @CrossOrigin(origins = "http://192.168.0.16:8081")
     @PostMapping("/login")
     public ResponseEntity<DTOTokenJWT> login(@RequestBody @Valid DTOAutenticacaoAluno dados) {
         var aluno = alunoService.autenticarAluno(dados);
@@ -40,12 +49,38 @@ public class AlunoController {
         return ResponseEntity.ok(new DTOTokenJWT(tokenJWT));
     }
 
+    // Solicitação de recuperação de senha para Aluno
+    @PostMapping("/recuperar-senha")
+    public ResponseEntity<String> solicitarRecuperacaoSenha(@RequestParam String login) {
+        var aluno = alunoRepository.findByLogin(login)
+                .orElseThrow(() -> new IllegalArgumentException("Aluno não encontrado"));
+
+        String token = tokenService.GerarTokenAluno(aluno);
+        return ResponseEntity.ok("Token de recuperação: " + token);
+    }
+
+    // Redefinição de senha para Aluno
+    @PostMapping("/redefinir-senha")
+    public ResponseEntity<String> redefinirSenha(
+            @RequestParam String token,
+            @RequestParam String novaSenha) {
+        String login = tokenService.decodeToken(token).getSubject();
+        var aluno = alunoRepository.findByLogin(login)
+                .orElseThrow(() -> new IllegalArgumentException("Aluno não encontrado"));
+
+        aluno.setSenha(passwordEncoder.encode(novaSenha));
+        alunoRepository.save(aluno);
+
+        return ResponseEntity.ok("Senha redefinida com sucesso.");
+    }
+    @CrossOrigin(origins = "http://192.168.0.16:8081")
     @GetMapping
     public ResponseEntity<Page<DTOListaAluno>> Listar(@PageableDefault(size = 10, sort = {"nome"}) Pageable paginacao) {
         var page = alunoService.listarTodos(paginacao).map(DTOListaAluno::new);
         return ResponseEntity.ok(page);
     }
 
+    @CrossOrigin(origins = "http://192.168.0.16:8081")
     @PutMapping("/{id}")
     @Transactional
     public ResponseEntity<DTOListaAluno> Atualizar(@RequestBody @Valid DTOAttAluno dados) {
@@ -53,6 +88,7 @@ public class AlunoController {
         return ResponseEntity.ok(new DTOListaAluno(aluno));
     }
 
+    @CrossOrigin(origins = "http://192.168.0.16:8081")
     @DeleteMapping("/{id}")
     @Transactional
     public ResponseEntity<Void> Excluir(@PathVariable Long id) {
@@ -60,10 +96,15 @@ public class AlunoController {
         return ResponseEntity.noContent().build();
     }
 
+    @CrossOrigin(origins = "http://192.168.0.16:8081")
     @GetMapping("/{id}")
     public ResponseEntity<DTOListaAluno> Detalhar(@PathVariable Long id) {
         var aluno = alunoService.buscarAlunoPorId(id);
         return ResponseEntity.ok(new DTOListaAluno(aluno));
     }
+
 }
+
+
+
 

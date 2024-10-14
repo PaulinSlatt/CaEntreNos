@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.util.List;
+
 
 // Classe que recebe as requisições do CRUD
 @RestController
@@ -68,9 +70,28 @@ public class RelatoController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<DTOListaRelato>> Listar(@PageableDefault(size = 10, sort = {"data"}) Pageable paginacao) {
-        var page = repository.findAllByAtivoTrue(paginacao).map(DTOListaRelato::new);
-        return ResponseEntity.ok(page);
+
+
+
+    
+    public ResponseEntity<Page<DTOListaRelato>> Listar(
+            @PageableDefault(size = 10, sort = {"data"}) Pageable paginacao) {
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        boolean isAdmin = authentication.getPrincipal() instanceof AdminUserDetails;
+
+
+        Page<Relato> page;
+        if (isAdmin) {
+            page = repository.findAllByAtivoTrue(paginacao);
+        } else {
+
+            page = repository.findByTipoNotInAndAtivoTrue(
+                    List.of(Tipo.ABUSO, Tipo.SEGURANÇA), paginacao);
+        }
+
+        var dtoPage = page.map(DTOListaRelato::new);
+        return ResponseEntity.ok(dtoPage);
     }
 
     @PutMapping
