@@ -75,4 +75,9 @@ public class Relato {
         this.resposta = resposta;
         this.status = "respondido";
     }
+
+
+    public String getFormattedId() {
+        return String.format("#%05d", id);
+    }
 }

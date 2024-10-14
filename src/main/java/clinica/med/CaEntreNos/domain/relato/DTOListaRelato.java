@@ -2,10 +2,10 @@ package clinica.med.CaEntreNos.domain.relato;
 
 import java.time.LocalDateTime;
 
-public record DTOListaRelato(Long id, String descricao, String status, Tipo tipo, Long alunoId, LocalDateTime data) {
+public record DTOListaRelato(String idFormatado, String descricao, String status, Tipo tipo, Long alunoId, LocalDateTime data) {
 
     public DTOListaRelato(Relato relato) {
-        this(relato.getId(), relato.getDescricao(), relato.getStatus(), relato.getTipo(), relato.getAluno().getId(), relato.getData());
+        this(String.format("#%05d", relato.getId()), relato.getDescricao(), relato.getStatus(), relato.getTipo(), relato.getAluno().getId(), relato.getData());
     }
 
 }

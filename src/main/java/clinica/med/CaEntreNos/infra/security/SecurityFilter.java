@@ -16,8 +16,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.List;
 
-//anotacao utilizada quando a classe nao tem um tipo, mas queremos que o spring carregue.
 @Component
 public class SecurityFilter extends OncePerRequestFilter {
 
@@ -27,79 +27,71 @@ public class SecurityFilter extends OncePerRequestFilter {
     @Autowired
     private AlunoRepository alunoRepository;
 
-     @Autowired
-     private AdminRepository adminRepository;
+    @Autowired
+    private AdminRepository adminRepository;
 
+    // Definimos rotas públicas que não exigem autenticação
+    private static final List<String> PUBLIC_ROUTES = List.of(
+            "/relatos",  // GET e POST são públicos
+            "/swagger-ui", "/v3/api-docs"  // Documentação pública
+    );
 
-
-    // @Autowired
-    // private ResponsavelRepository responsavelRepository;
-
-
-
-
-    // A cada requisição, o filtro é acionado para verificar se a pessoa tem credenciais para acessar o recurso
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
         String tokenJWT = recuperarToken(request);
 
+        // Se a rota for pública, não precisa validar token
+        if (isPublicRoute(request)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        // Se o token existir, valida o tipo de usuário e autentica
         if (tokenJWT != null) {
             String tipoUsuario = tokenService.getTipoUsuario(tokenJWT);
-
-            // Verifica o tipo de usuário e permite que o ADMIN acesse qualquer rota
-            if ("ALUNO".equals(tipoUsuario) && request.getRequestURI().startsWith("/alunos")) {
-                autenticarUsuario(request, tipoUsuario);
-            } else if ("ADMIN".equals(tipoUsuario)) {
-                // ADMIN pode acessar qualquer rota
-                autenticarUsuario(request, tipoUsuario);
-            } else {
-                // Se o TipoUsuario não for correspondente à rota, bloqueie a requisição
-                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                return;
-            }
+            autenticarUsuario(tipoUsuario);
         }
 
         filterChain.doFilter(request, response);
     }
 
-    private void autenticarUsuario(HttpServletRequest request, String tipoUsuario) {
-        String tokenJWT = recuperarToken(request);
+    // Verifica se a rota atual é pública
+    private boolean isPublicRoute(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        return PUBLIC_ROUTES.stream().anyMatch(path::startsWith);
+    }
+
+    // Autentica o usuário com base no tipo
+    private void autenticarUsuario(String tipoUsuario) {
+        String tokenJWT = recuperarToken((HttpServletRequest) SecurityContextHolder.getContext().getAuthentication().getDetails());
         String subject = tokenService.decodeToken(tokenJWT).getSubject();
 
         if ("ALUNO".equals(tipoUsuario)) {
-            var aluno = alunoRepository.findByLogin(subject);
-            if (aluno.isPresent()) {
-                var alunoUserDetails = new AlunoUserDetails(aluno.get());
-                var authentication = new UsernamePasswordAuthenticationToken(alunoUserDetails, null, alunoUserDetails.getAuthorities());
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-            } else {
-                throw new UsernameNotFoundException("Aluno não encontrado");
-            }
+            var aluno = alunoRepository.findByLogin(subject)
+                    .orElseThrow(() -> new UsernameNotFoundException("Aluno não encontrado"));
+            var alunoUserDetails = new AlunoUserDetails(aluno);
+            var authentication = new UsernamePasswordAuthenticationToken(
+                    alunoUserDetails, null, alunoUserDetails.getAuthorities());
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+
         } else if ("ADMIN".equals(tipoUsuario)) {
-            var admin = adminRepository.findByLogin(subject);
-            if (admin.isPresent()) {
-                var adminUserDetails = new AdminUserDetails(admin.get());
-                var authentication = new UsernamePasswordAuthenticationToken(adminUserDetails, null, adminUserDetails.getAuthorities());
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-            } else {
-                throw new UsernameNotFoundException("Admin não encontrado");
-            }
+            var admin = adminRepository.findByLogin(subject)
+                    .orElseThrow(() -> new UsernameNotFoundException("Admin não encontrado"));
+            var adminUserDetails = new AdminUserDetails(admin);
+            var authentication = new UsernamePasswordAuthenticationToken(
+                    adminUserDetails, null, adminUserDetails.getAuthorities());
+            SecurityContextHolder.getContext().setAuthentication(authentication);
         }
     }
 
-
-
+    // Recupera o token JWT do cabeçalho Authorization
     private String recuperarToken(HttpServletRequest request) {
         var authorizationHeader = request.getHeader("Authorization");
         if (authorizationHeader != null) {
             return authorizationHeader.replace("Bearer ", "");
         }
-
         return null;
     }
-
-
-
 }
