@@ -42,6 +42,18 @@ public class RelatoController {
         return ResponseEntity.created(uri).body(new DTORelato(relato));
     }
 
+    @PostMapping("/curtir/{id}")
+    @Transactional
+    public ResponseEntity<DTOListaRelato> curtirRelato(@PathVariable Long id) {
+        var relato = repository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Relato não encontrado"));
+
+        relato.curtir();
+        repository.save(relato);
+
+        return ResponseEntity.ok(new DTOListaRelato(relato));
+    }
+
     // Método para responder um relato (Apenas Admin)
     @PostMapping("/responder/{id}")
     @Transactional

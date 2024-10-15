@@ -38,6 +38,12 @@ public class Relato {
 
     private String resposta;
 
+    @Column(nullable = false, columnDefinition = "INT DEFAULT 0")
+    private int curtidas = 0;
+
+
+
+
     // Construtor personalizado usando DTO
     public Relato(DTORelato dados) {
         this.aluno = new Aluno(dados.alunoId()); // Presumindo que o DTO tenha o ID do aluno
@@ -76,8 +82,12 @@ public class Relato {
         this.status = "respondido";
     }
 
-
     public String getFormattedId() {
         return String.format("#%05d", id);
     }
+
+    public void curtir() {
+        this.curtidas++;
+    }
 }
+
