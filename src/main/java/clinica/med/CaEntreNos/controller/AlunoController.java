@@ -43,10 +43,10 @@ public class AlunoController {
 
     @CrossOrigin(origins = "http://192.168.0.16:8081")
     @PostMapping("/login")
-    public ResponseEntity<DTOTokenJWT> login(@RequestBody @Valid DTOAutenticacaoAluno dados) {
+    public ResponseEntity<DTOLoginResponse> login(@RequestBody @Valid DTOAutenticacaoAluno dados) {
         var aluno = alunoService.autenticarAluno(dados);
         var tokenJWT = tokenService.GerarTokenAluno(aluno);
-        return ResponseEntity.ok(new DTOTokenJWT(tokenJWT));
+        return ResponseEntity.ok(new DTOLoginResponse(tokenJWT, new DTOListaAluno(aluno)));
     }
 
     // Solicitação de recuperação de senha para Aluno

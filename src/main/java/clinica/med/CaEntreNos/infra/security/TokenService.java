@@ -52,19 +52,6 @@ public class TokenService {
         }
     }
 
-    /*public String getSubject(String tokenJWT) {
-        try {
-            var algorithm = Algorithm.HMAC256(secret);
-            return JWT.require(algorithm)
-                    .withIssuer("CaEntreNos")
-                    .build()
-                    .verify(tokenJWT)
-                    .getSubject();
-        } catch (JWTVerificationException exception) {
-            throw new RuntimeException("Token JWT inválido ou expirado!");
-        }
-    }*/
-
     public DecodedJWT decodeToken(String tokenJWT) {
         try {
             var algorithm = Algorithm.HMAC256(secret);

@@ -42,16 +42,17 @@ public class SecurityFilter extends OncePerRequestFilter {
 
         String tokenJWT = recuperarToken(request);
 
-        // Se a rota for pública, não precisa validar token
-        if (isPublicRoute(request)) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        // Se o token existir, valida o tipo de usuário e autentica
         if (tokenJWT != null) {
-            String tipoUsuario = tokenService.getTipoUsuario(tokenJWT);
-            autenticarUsuario(tipoUsuario);
+            try {
+                System.out.println("Token JWT encontrado, autenticando...");
+                String tipoUsuario = tokenService.getTipoUsuario(tokenJWT);
+                autenticarUsuario(tipoUsuario, tokenJWT);
+                System.out.println("Autenticação final no contexto: " + SecurityContextHolder.getContext().getAuthentication());
+            } catch (Exception e) {
+                System.out.println("Erro ao autenticar o token: " + e.getMessage());
+            }
+        } else {
+            System.out.println("Nenhum token JWT encontrado");
         }
 
         filterChain.doFilter(request, response);
@@ -64,34 +65,37 @@ public class SecurityFilter extends OncePerRequestFilter {
     }
 
     // Autentica o usuário com base no tipo
-    private void autenticarUsuario(String tipoUsuario) {
-        String tokenJWT = recuperarToken((HttpServletRequest) SecurityContextHolder.getContext().getAuthentication().getDetails());
+    private void autenticarUsuario(String tipoUsuario, String tokenJWT) {
         String subject = tokenService.decodeToken(tokenJWT).getSubject();
 
-        if ("ALUNO".equals(tipoUsuario)) {
-            var aluno = alunoRepository.findByLogin(subject)
-                    .orElseThrow(() -> new UsernameNotFoundException("Aluno não encontrado"));
-            var alunoUserDetails = new AlunoUserDetails(aluno);
-            var authentication = new UsernamePasswordAuthenticationToken(
-                    alunoUserDetails, null, alunoUserDetails.getAuthorities());
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-
-        } else if ("ADMIN".equals(tipoUsuario)) {
+        if ("ADMIN".equals(tipoUsuario)) {
             var admin = adminRepository.findByLogin(subject)
                     .orElseThrow(() -> new UsernameNotFoundException("Admin não encontrado"));
             var adminUserDetails = new AdminUserDetails(admin);
             var authentication = new UsernamePasswordAuthenticationToken(
                     adminUserDetails, null, adminUserDetails.getAuthorities());
             SecurityContextHolder.getContext().setAuthentication(authentication);
+            System.out.println("Admin autenticado: " + admin.getLogin());
+        } else if ("ALUNO".equals(tipoUsuario)) {
+            var aluno = alunoRepository.findByLogin(subject)
+                    .orElseThrow(() -> new UsernameNotFoundException("Aluno não encontrado"));
+            var alunoUserDetails = new AlunoUserDetails(aluno);
+            var authentication = new UsernamePasswordAuthenticationToken(
+                    alunoUserDetails, null, alunoUserDetails.getAuthorities());
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            System.out.println("Aluno autenticado: " + aluno.getLogin());
+        } else {
+            System.out.println("Tipo de usuário desconhecido: " + tipoUsuario);
         }
     }
 
-    // Recupera o token JWT do cabeçalho Authorization
     private String recuperarToken(HttpServletRequest request) {
         var authorizationHeader = request.getHeader("Authorization");
-        if (authorizationHeader != null) {
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
             return authorizationHeader.replace("Bearer ", "");
         }
         return null;
     }
+
+
 }

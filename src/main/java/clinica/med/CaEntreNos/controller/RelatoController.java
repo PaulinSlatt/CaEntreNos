@@ -61,20 +61,39 @@ public class RelatoController {
             @PathVariable Long id,
             @RequestBody @Valid DTORespostaRelato dados) {
 
+        System.out.println("Iniciando a resposta para o relato com ID: " + id);
+
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        if (!(authentication.getPrincipal() instanceof AdminUserDetails)) {
+        if (authentication == null) {
+            System.out.println("Nenhuma autenticação encontrada no SecurityContext");
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Acesso negado");
         }
 
+        if (!(authentication.getPrincipal() instanceof AdminUserDetails)) {
+            System.out.println("Usuário autenticado não é um admin: " + authentication.getName());
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Acesso negado");
+        }
+
+        AdminUserDetails adminUser = (AdminUserDetails) authentication.getPrincipal();
+        System.out.println("Admin logado: " + adminUser.getUsername());
+
+        // Verifique se o ID do relato é válido
         var relato = repository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Relato não encontrado"));
 
-        // Adiciona a resposta e altera o status para "respondido"
+        System.out.println("Relato encontrado. Atualizando resposta...");
+
+        // Atualizando o relato com a resposta
         relato.setResposta(dados.resposta());
         relato.setStatus("respondido");
 
-        repository.save(relato); // Salva as mudanças no banco
+        // Salvando as mudanças no banco
+        repository.save(relato);
+
+        System.out.println("Relato atualizado e salvo com sucesso.");
+
+        // Retornando o objeto atualizado
         return ResponseEntity.ok(new DTORespostaRelato(relato));
     }
 
