@@ -13,6 +13,8 @@ public record DTORelato( @NotNull
                          @NotNull
                          Long alunoId,
 
+                         @NotBlank String nomeAluno,
+
                          @NotBlank
                          String status){
 
@@ -22,6 +24,7 @@ public record DTORelato( @NotNull
                 relato.getTipo(),
                 relato.getDescricao(),
                 relato.getAluno() != null ? relato.getAluno().getId() : null,
+                relato.getAluno() != null ? relato.getAluno().getNome() : "",
                 relato.getStatus()
         );
     }
